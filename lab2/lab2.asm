@@ -7,7 +7,8 @@ stack ends
 data segment
     info db 'lcy, 20009200174$'
     noticemsg1 db 'please input at most 5 numbers, input enter to print, and input q or Q to quit program$'
-    noticemsg2 db 'you have input more than 5 numbers'
+    noticemsg2 db 'you have input more than 5 numbers$'
+    noticemsg3 db 'please input number, not letter!$'
 data ends
 
 code segment
@@ -15,7 +16,7 @@ start:
 
     mov ax, stack
     mov ss, ax
-    mox ax, data
+    mov ax, data
     mov ds, ax
     ; print my info
     mov dx, offset info
@@ -27,28 +28,33 @@ start:
     mov ah, 09h
     int 21h
     call linebreak
-    mov bx, 00h
-
+    mov bl, 00h
+    mov cx, 06h
 input:
 
     ; input at most 5 number
     mov ah, 01h
     int 21h
-    mov cl, al
+    mov dl, al
     ; -30h
-    sub cl, 30h
+    sub dl, 30h 
     cmp al, 'q'
     je finish
     cmp al, 'Q'
     je finish
-    cmp al, 13h
+    cmp al, 13
     je printbinary
+    cmp al, 48
+    jl wronginput
+    cmp al, 57
+    jg wronginput
     ; pre * 10
-    mov ax, bx
-    mov bl, 10h
+    mov al, bl
+    mov bl, 10
     mul bl
-    add ax, cl
-    mov bx, ax
+    mov dh, 0
+    add al, dl
+    mov bl, al
     loop input
 
 over5numbers:
@@ -57,20 +63,29 @@ over5numbers:
     int 21h
     jmp finish
 
+wronginput:
+    call linebreak
+    mov dx, offset noticemsg3
+    mov ah, 09h
+    int 21h
+    call linebreak
+    jmp input
+
 printbinary:
     ; print binary value in bx
     mov cx, 8
     mov ah, 02h
 print:
     mov dl, '1'
-    test bl, 100000000h
+    test bl, 10000000b
     jne printone
     ; print 0
     mov dl, '0'
 printone:
+    shl bl, 1 
     int 21h
 loopback:
-    loop printbinary        
+    loop print        
 finish:
     mov ax, 4c00h 
     int 21h   
@@ -81,7 +96,6 @@ linebreak:
 		mov ah, 02h
 		int 21h	
 		ret
-
     
 code ends
-ens start
+end start
